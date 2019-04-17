@@ -22,7 +22,9 @@
 #include "scenario/scenario.h"
 #include "sound/city.h"
 #include "sound/system.h"
+#include "window/editor/map.h"
 #include "window/logo.h"
+#include "window/main_menu.h"
 
 static const time_millis MILLIS_PER_TICK_PER_SPEED[] = {
     0, 20, 35, 55, 80, 110, 160, 240, 350, 500, 700
@@ -62,7 +64,7 @@ int game_init(void)
         return 0;
     }
     
-    if (!image_load_climate(CLIMATE_CENTRAL)) {
+    if (!image_load_climate(CLIMATE_CENTRAL, 0)) {
         errlog("unable to load main graphics");
         return 0;
     }
@@ -74,6 +76,7 @@ int game_init(void)
         errlog("unable to load fonts graphics");
         return 0;
     }
+    image_enable_fonts(with_fonts);
 
     if (!model_load()) {
         errlog("unable to load c3_model.txt");
@@ -84,6 +87,45 @@ int game_init(void)
     game_state_init();
     window_logo_show();
     return 1;
+}
+
+int game_init_editor(void)
+{
+    if (!lang_load("c3_map.eng", "c3_map_mm.eng")) {
+        errlog("'c3_map.eng' or 'c3_map_mm.eng' files not found or too large.");
+        return 0;
+    }
+    encoding_type encoding = encoding_determine();
+    log_info("Detected encoding:", 0, encoding);
+    font_set_encoding(encoding);
+    image_enable_fonts(encoding == ENCODING_CYRILLIC);
+
+    if (!image_load_climate(CLIMATE_CENTRAL, 1)) {
+        errlog("unable to load main graphics");
+        return 0;
+    }
+
+    window_editor_map_show();
+    return 1;
+}
+
+void game_exit_editor(void)
+{
+    if (!lang_load("c3.eng", "c3_mm.eng") && !lang_load("c3.rus", "c3_mm.rus")) {
+        errlog("'c3.eng' or 'c3_mm.eng' files not found or too large.");
+        return;
+    }
+    encoding_type encoding = encoding_determine();
+    log_info("Detected encoding:", 0, encoding);
+    font_set_encoding(encoding);
+    image_enable_fonts(encoding == ENCODING_CYRILLIC);
+
+    if (!image_load_climate(CLIMATE_CENTRAL, 0)) {
+        errlog("unable to load main graphics");
+        return;
+    }
+
+    window_main_menu_show();
 }
 
 static int get_elapsed_ticks(void)
